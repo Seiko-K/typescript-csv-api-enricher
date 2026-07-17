@@ -1,0 +1,7 @@
+supplierId,supplierName,countryCode,email
+SUP001,OpenAI,US,contact@example.com
+SUP002,Microsoft,US,info@example.com
+SUP003,SAP,DE,contact@example.com
+SUP004,Airbus,FR,hello@example.com
+SUP005,Example Supplier,,invalid-email
+SUP001,Duplicate Supplier,JP,duplicate@example.com
