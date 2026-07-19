@@ -3,27 +3,30 @@
 // アプリケーション開始位置
 // ==========================================
 
-// Supplier型を読み込む
-import type { Supplier } from "./types/supplier";
+import { readSuppliersFromCsv } from "./csv/csvReader";
 
-// Supplier型に沿ったデータを作成
-const supplier: Supplier = {
+/**
+ * アプリケーションのメイン処理
+ */
+function main(): void {
+    // プロジェクトルートを基準にサンプルCSVを読み込みます。
+    // OS固有の絶対パスを利用者に入力させません。
+    const suppliers = readSuppliersFromCsv(
+        "samples/supplier_master.csv"
+    );
 
-    // 仕入先ID
-    supplierId: "SUP001",
+    // 読み込んだ件数を表示します。
+    // 将来的にはloggerへ置き換える予定です。
+    process.stdout.write(
+        `Suppliers loaded: ${suppliers.length}\n`
+    );
 
-    // 会社名
-    supplierName: "OpenAI",
+    // 動作確認として仕入先名を表示します。
+    for (const supplier of suppliers) {
+        process.stdout.write(
+            `- ${supplier.supplierId}: ${supplier.supplierName}\n`
+        );
+    }
+}
 
-    // 国コード
-    countryCode: "US",
-
-    // メール
-    email: "contact@example.com"
-};
-
-// 画面へ出力
-// （将来はloggerへ置き換える予定）
-process.stdout.write(
-    `Supplier loaded: ${supplier.supplierName}\n`
-);
+main();
