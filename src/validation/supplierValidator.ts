@@ -1,6 +1,6 @@
 // ==========================================
 // Supplier Validator
-// 仕入先データの必須項目と重複を検証する
+// 仕入先データの品質を検証する
 // ==========================================
 
 import type { Supplier } from "../types/supplier";
@@ -11,9 +11,34 @@ import type {
 
 /**
  * 値が空文字かどうかを確認します。
+ *
+ * 前後の空白だけが入力されている場合も、
+ * 空の値として扱います。
  */
 function isEmpty(value: string): boolean {
     return value.trim().length === 0;
+}
+
+/**
+ * メールアドレスが基本的な形式を満たしているか確認します。
+ *
+ * このチェックでは、次の基本構造を確認します。
+ *
+ * local-part@domain
+ *
+ * 例：
+ * valid@example.com
+ *
+ * この関数はメールアドレスの存在確認までは行いません。
+ * あくまでCSV入力値の形式チェックです。
+ */
+function isValidEmail(value: string): boolean {
+    const normalizedEmail = value.trim();
+
+    const emailPattern =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    return emailPattern.test(normalizedEmail);
 }
 
 /**
@@ -22,6 +47,7 @@ function isEmpty(value: string): boolean {
  * 現在の検証内容：
  * - 必須項目チェック
  * - Supplier ID重複チェック
+ * - メールアドレス形式チェック
  *
  * @param suppliers CSVから読み込んだ仕入先データ
  * @returns 集計結果と検出された問題
@@ -36,8 +62,11 @@ export function validateSuppliers(
     const supplierIdCounts = new Map<string, number>();
 
     for (const supplier of suppliers) {
-        const normalizedSupplierId = supplier.supplierId.trim();
+        const normalizedSupplierId =
+            supplier.supplierId.trim();
 
+        // 空のSupplier IDは重複検証の対象外とします。
+        // 空欄については必須項目チェックで検出します。
         if (normalizedSupplierId.length === 0) {
             continue;
         }
@@ -55,6 +84,11 @@ export function validateSuppliers(
     // 最初のデータ行はCSV上の2行目になります。
     suppliers.forEach((supplier, index) => {
         const rowNumber = index + 2;
+
+        // ======================================
+        // Required Value Validation
+        // 必須項目チェック
+        // ======================================
 
         if (isEmpty(supplier.supplierId)) {
             issues.push({
@@ -96,7 +130,14 @@ export function validateSuppliers(
             });
         }
 
-        const normalizedSupplierId = supplier.supplierId.trim();
+        // ======================================
+        // Duplicate Supplier ID Validation
+        // Supplier ID重複チェック
+        // ======================================
+
+        const normalizedSupplierId =
+            supplier.supplierId.trim();
+
         const supplierIdCount =
             supplierIdCounts.get(normalizedSupplierId) ?? 0;
 
@@ -109,12 +150,34 @@ export function validateSuppliers(
                 supplierId: supplier.supplierId,
                 field: "supplierId",
                 rule: "DUPLICATE_SUPPLIER_ID",
-                message: `Duplicate supplier ID: ${normalizedSupplierId}`
+                message:
+                    `Duplicate supplier ID: ${normalizedSupplierId}`
+            });
+        }
+
+        // ======================================
+        // Email Format Validation
+        // メールアドレス形式チェック
+        // ======================================
+
+        // 空欄は必須項目チェックで検出済みなので、
+        // 値が入力されている場合だけ形式を確認します。
+        if (
+            !isEmpty(supplier.email) &&
+            !isValidEmail(supplier.email)
+        ) {
+            issues.push({
+                rowNumber,
+                supplierId: supplier.supplierId,
+                field: "email",
+                rule: "INVALID_EMAIL_FORMAT",
+                message:
+                    `Invalid email format: ${supplier.email.trim()}`
             });
         }
     });
 
-    // 複数エラーが同じ行に存在しても、
+    // 複数の問題が同じ行に存在しても、
     // 無効レコード数としては1行だけ数えます。
     const invalidRowNumbers = new Set(
         issues.map((issue) => issue.rowNumber)

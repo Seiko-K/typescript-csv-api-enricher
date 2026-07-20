@@ -6,17 +6,19 @@
 /**
  * 検証エラーの種類を表します。
  *
- * 将来、メール形式や国コード検証を追加しても、
- * 同じ形式で管理できるようにしています。
+ * 新しい検証ルールを追加するときは、
+ * この型へルール名を追加します。
  */
 export type ValidationRule =
     | "REQUIRED_VALUE"
-    | "DUPLICATE_SUPPLIER_ID";
+    | "DUPLICATE_SUPPLIER_ID"
+    | "INVALID_EMAIL_FORMAT";
 
 /**
  * 1件の検証エラーを表します。
  *
- * Excelでいうと、エラーレポートの1行に相当します。
+ * Excelでいうと、
+ * エラーレポートの1行に相当します。
  */
 export interface ValidationIssue {
     // 問題が見つかったCSV上の行番号
