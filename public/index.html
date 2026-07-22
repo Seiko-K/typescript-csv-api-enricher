@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Validate supplier CSV data and review data quality issues."
+    >
+
+    <title>Business Data Processing Toolkit</title>
+
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+    <main class="page-container">
+        <!--
+            アプリケーションのタイトル領域です。
+            ツールの目的を最初に明確に伝えます。
+        -->
+        <header class="page-header">
+            <p class="eyebrow">BUSINESS DATA QUALITY</p>
+
+            <h1>Business Data Processing Toolkit</h1>
+
+            <p class="page-description">
+                Select a supplier CSV file to validate required values,
+                duplicate IDs, and email formats.
+            </p>
+        </header>
+
+        <!--
+            CSVファイルを選択する操作領域です。
+            labelをボタンとして見せることで、
+            OS標準のファイル選択画面を利用します。
+        -->
+        <section
+            class="panel upload-panel"
+            aria-labelledby="upload-title"
+        >
+            <div class="section-heading">
+                <div>
+                    <p class="step-label">STEP 1</p>
+                    <h2 id="upload-title">Select CSV File</h2>
+                </div>
+
+                <span class="file-type-badge">CSV</span>
+            </div>
+
+            <div class="file-selection-area">
+                <input
+                    id="csv-file-input"
+                    class="visually-hidden"
+                    type="file"
+                    accept=".csv,text/csv"
+                >
+
+                <label
+                    class="file-select-button"
+                    for="csv-file-input"
+                >
+                    Choose CSV File
+                </label>
+
+                <div class="selected-file-information">
+                    <span class="selected-file-label">
+                        Selected file
+                    </span>
+
+                    <span
+                        id="selected-file-name"
+                        class="selected-file-name"
+                    >
+                        No file selected
+                    </span>
+                </div>
+            </div>
+
+            <button
+                id="validate-button"
+                class="validate-button"
+                type="button"
+                disabled
+            >
+                Validate Supplier Data
+            </button>
+
+            <p
+                id="application-status"
+                class="application-status"
+                role="status"
+                aria-live="polite"
+            >
+                Select a CSV file to begin.
+            </p>
+        </section>
+
+        <!--
+            検証結果の集計を表示する領域です。
+            現時点では初期値のみ表示します。
+        -->
+        <section
+            class="panel result-panel"
+            aria-labelledby="result-title"
+        >
+            <div class="section-heading">
+                <div>
+                    <p class="step-label">STEP 2</p>
+                    <h2 id="result-title">Validation Summary</h2>
+                </div>
+            </div>
+
+            <div class="summary-grid">
+                <article class="summary-card">
+                    <span class="summary-label">
+                        Total Records
+                    </span>
+
+                    <strong
+                        id="total-records"
+                        class="summary-value"
+                    >
+                        –
+                    </strong>
+                </article>
+
+                <article class="summary-card">
+                    <span class="summary-label">
+                        Valid Records
+                    </span>
+
+                    <strong
+                        id="valid-records"
+                        class="summary-value"
+                    >
+                        –
+                    </strong>
+                </article>
+
+                <article class="summary-card">
+                    <span class="summary-label">
+                        Invalid Records
+                    </span>
+
+                    <strong
+                        id="invalid-records"
+                        class="summary-value"
+                    >
+                        –
+                    </strong>
+                </article>
+
+                <article class="summary-card">
+                    <span class="summary-label">
+                        Issues Detected
+                    </span>
+
+                    <strong
+                        id="issues-detected"
+                        class="summary-value"
+                    >
+                        –
+                    </strong>
+                </article>
+            </div>
+        </section>
+
+        <!--
+            個別の検証エラーを表示する領域です。
+            次回、Validation Engineと接続します。
+        -->
+        <section
+            class="panel issues-panel"
+            aria-labelledby="issues-title"
+        >
+            <div class="section-heading">
+                <div>
+                    <p class="step-label">DETAILS</p>
+                    <h2 id="issues-title">Validation Issues</h2>
+                </div>
+            </div>
+
+            <div
+                id="issues-container"
+                class="empty-state"
+            >
+                <p class="empty-state-title">
+                    No validation has been executed.
+                </p>
+
+                <p class="empty-state-description">
+                    Validation issues will appear here after processing
+                    a supplier CSV file.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <script src="./app.js"></script>
+</body>
+</html>
