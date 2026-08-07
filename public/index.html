@@ -1,672 +1,250 @@
-<svg
-  xmlns="http://www.w3.org/2000/svg"
-  width="1400"
-  height="780"
-  viewBox="0 0 1400 780"
-  role="img"
-  aria-labelledby="title description"
->
-  <title id="title">
-    TypeScript CSV API Enricher Architecture
-  </title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
 
-  <desc id="description">
-    Supplier CSV data is imported through a browser interface,
-    validated by a shared validation engine, exported as a validation
-    report, enriched through a Node.js server and external country API,
-    and exported as an enriched CSV file.
-  </desc>
-
-  <defs>
-    <style>
-      .diagram-title {
-        font: 700 34px Arial, sans-serif;
-        fill: #172033;
-      }
-
-      .section-label {
-        font: 700 13px Arial, sans-serif;
-        fill: #2f6fed;
-        letter-spacing: 1.5px;
-      }
-
-      .box-title {
-        font: 700 19px Arial, sans-serif;
-        fill: #172033;
-      }
-
-      .box-description {
-        font: 400 14px Arial, sans-serif;
-        fill: #5f6b7f;
-      }
-
-      .small-label {
-        font: 700 12px Arial, sans-serif;
-        fill: #ffffff;
-      }
-
-      .arrow {
-        stroke: #7a8799;
-        stroke-width: 3;
-        fill: none;
-        marker-end: url(#arrowhead);
-      }
-
-      .branch-arrow {
-        stroke: #9aa7b8;
-        stroke-width: 2.5;
-        fill: none;
-        stroke-dasharray: 7 6;
-        marker-end: url(#arrowhead-muted);
-      }
-
-      .box {
-        stroke-width: 2;
-      }
-
-      .input-box {
-        fill: #eef4ff;
-        stroke: #7da4f5;
-      }
-
-      .web-box {
-        fill: #ffffff;
-        stroke: #9fb3ca;
-      }
-
-      .validation-box {
-        fill: #fff7ed;
-        stroke: #f0a35e;
-      }
-
-      .report-box {
-        fill: #fff1f0;
-        stroke: #e58b83;
-      }
-
-      .server-box {
-        fill: #eefaf7;
-        stroke: #55b9a5;
-      }
-
-      .api-box {
-        fill: #ecf8fb;
-        stroke: #63b8c9;
-      }
-
-      .enrichment-box {
-        fill: #f3efff;
-        stroke: #9d83db;
-      }
-
-      .output-box {
-        fill: #edf9f1;
-        stroke: #67b981;
-      }
-
-      .rule-pill {
-        fill: #fff2e6;
-        stroke: #efb47b;
-        stroke-width: 1.5;
-      }
-
-      .rule-text {
-        font: 600 12px Arial, sans-serif;
-        fill: #8a4b12;
-      }
-
-      .status-pill {
-        fill: #087f6f;
-      }
-    </style>
-
-    <marker
-      id="arrowhead"
-      markerWidth="12"
-      markerHeight="12"
-      refX="10"
-      refY="6"
-      orient="auto"
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
     >
-      <path
-        d="M0,0 L12,6 L0,12 Z"
-        fill="#7a8799"
-      />
-    </marker>
 
-    <marker
-      id="arrowhead-muted"
-      markerWidth="12"
-      markerHeight="12"
-      refX="10"
-      refY="6"
-      orient="auto"
+    <meta
+        name="description"
+        content="Validate and enrich supplier CSV data using external country information."
     >
-      <path
-        d="M0,0 L12,6 L0,12 Z"
-        fill="#9aa7b8"
-      />
-    </marker>
 
-    <filter
-      id="shadow"
-      x="-20%"
-      y="-20%"
-      width="140%"
-      height="140%"
-    >
-      <feDropShadow
-        dx="0"
-        dy="8"
-        stdDeviation="8"
-        flood-color="#223047"
-        flood-opacity="0.10"
-      />
-    </filter>
-  </defs>
+    <title>Business Data Processing Toolkit</title>
 
-  <!-- 背景 -->
-  <rect
-    width="1400"
-    height="780"
-    fill="#f7f9fc"
-  />
+    <link rel="stylesheet" href="./style.css">
+</head>
 
-  <!-- タイトル -->
-  <text
-    x="700"
-    y="58"
-    text-anchor="middle"
-    class="diagram-title"
-  >
-    TypeScript CSV API Enricher Architecture
-  </text>
+<body>
+    <main class="page-container">
+        <header class="page-header">
+            <p class="eyebrow">BUSINESS DATA QUALITY</p>
 
-  <!-- STEP 1 -->
-  <text
-    x="70"
-    y="120"
-    class="section-label"
-  >
-    INPUT
-  </text>
+            <h1>Business Data Processing Toolkit</h1>
 
-  <rect
-    x="60"
-    y="140"
-    width="210"
-    height="120"
-    rx="18"
-    class="box input-box"
-    filter="url(#shadow)"
-  />
+            <p class="page-description">
+                Validate supplier CSV data, enrich country information,
+                and export reusable business reports.
+            </p>
+        </header>
 
-  <text
-    x="165"
-    y="185"
-    text-anchor="middle"
-    class="box-title"
-  >
-    Supplier CSV
-  </text>
+        <section
+            class="panel upload-panel"
+            aria-labelledby="upload-title"
+        >
+            <div class="section-heading">
+                <div>
+                    <p class="step-label">STEP 1</p>
+                    <h2 id="upload-title">Select CSV File</h2>
+                </div>
 
-  <text
-    x="165"
-    y="215"
-    text-anchor="middle"
-    class="box-description"
-  >
-    Business master data
-  </text>
+                <span class="file-type-badge">CSV</span>
+            </div>
 
-  <text
-    x="165"
-    y="238"
-    text-anchor="middle"
-    class="box-description"
-  >
-    selected by the user
-  </text>
+            <div class="file-selection-area">
+                <input
+                    id="csv-file-input"
+                    class="visually-hidden"
+                    type="file"
+                    accept=".csv,text/csv"
+                >
 
-  <!-- Arrow -->
-  <line
-    x1="270"
-    y1="200"
-    x2="335"
-    y2="200"
-    class="arrow"
-  />
+                <label
+                    class="file-select-button"
+                    for="csv-file-input"
+                >
+                    Choose CSV File
+                </label>
 
-  <!-- Web UI -->
-  <text
-    x="355"
-    y="120"
-    class="section-label"
-  >
-    WEB INTERFACE
-  </text>
+                <div class="selected-file-information">
+                    <span class="selected-file-label">
+                        Selected file
+                    </span>
 
-  <rect
-    x="345"
-    y="140"
-    width="240"
-    height="120"
-    rx="18"
-    class="box web-box"
-    filter="url(#shadow)"
-  />
+                    <span
+                        id="selected-file-name"
+                        class="selected-file-name"
+                    >
+                        No file selected
+                    </span>
+                </div>
+            </div>
 
-  <text
-    x="465"
-    y="180"
-    text-anchor="middle"
-    class="box-title"
-  >
-    Browser Web UI
-  </text>
+            <button
+                id="validate-button"
+                class="validate-button"
+                type="button"
+                disabled
+            >
+                Validate Supplier Data
+            </button>
 
-  <text
-    x="465"
-    y="210"
-    text-anchor="middle"
-    class="box-description"
-  >
-    File selection
-  </text>
+            <p
+                id="application-status"
+                class="application-status"
+                role="status"
+                aria-live="polite"
+            >
+                Select a CSV file to begin.
+            </p>
+        </section>
 
-  <text
-    x="465"
-    y="233"
-    text-anchor="middle"
-    class="box-description"
-  >
-    Validation and export workflow
-  </text>
+        <section
+            class="panel result-panel"
+            aria-labelledby="result-title"
+        >
+            <div class="section-heading">
+                <div>
+                    <p class="step-label">STEP 2</p>
+                    <h2 id="result-title">Validation Summary</h2>
+                </div>
+            </div>
 
-  <!-- Arrow -->
-  <line
-    x1="585"
-    y1="200"
-    x2="650"
-    y2="200"
-    class="arrow"
-  />
+            <div class="summary-grid">
+                <article class="summary-card">
+                    <span class="summary-label">
+                        Total Records
+                    </span>
 
-  <!-- Validation -->
-  <text
-    x="670"
-    y="120"
-    class="section-label"
-  >
-    VALIDATION
-  </text>
+                    <strong
+                        id="total-records"
+                        class="summary-value"
+                    >
+                        –
+                    </strong>
+                </article>
 
-  <rect
-    x="660"
-    y="140"
-    width="290"
-    height="185"
-    rx="18"
-    class="box validation-box"
-    filter="url(#shadow)"
-  />
+                <article class="summary-card">
+                    <span class="summary-label">
+                        Valid Records
+                    </span>
 
-  <text
-    x="805"
-    y="180"
-    text-anchor="middle"
-    class="box-title"
-  >
-    Validation Engine
-  </text>
+                    <strong
+                        id="valid-records"
+                        class="summary-value"
+                    >
+                        –
+                    </strong>
+                </article>
 
-  <rect
-    x="690"
-    y="200"
-    width="230"
-    height="26"
-    rx="13"
-    class="rule-pill"
-  />
+                <article class="summary-card">
+                    <span class="summary-label">
+                        Invalid Records
+                    </span>
 
-  <text
-    x="805"
-    y="218"
-    text-anchor="middle"
-    class="rule-text"
-  >
-    Required Value Validation
-  </text>
+                    <strong
+                        id="invalid-records"
+                        class="summary-value"
+                    >
+                        –
+                    </strong>
+                </article>
 
-  <rect
-    x="690"
-    y="234"
-    width="230"
-    height="26"
-    rx="13"
-    class="rule-pill"
-  />
+                <article class="summary-card">
+                    <span class="summary-label">
+                        Issues Detected
+                    </span>
 
-  <text
-    x="805"
-    y="252"
-    text-anchor="middle"
-    class="rule-text"
-  >
-    Duplicate Supplier Detection
-  </text>
+                    <strong
+                        id="issues-detected"
+                        class="summary-value"
+                    >
+                        –
+                    </strong>
+                </article>
+            </div>
+        </section>
 
-  <rect
-    x="690"
-    y="268"
-    width="230"
-    height="26"
-    rx="13"
-    class="rule-pill"
-  />
+        <section
+            class="panel issues-panel"
+            aria-labelledby="issues-title"
+        >
+            <div class="section-heading issues-section-heading">
+                <div>
+                    <p class="step-label">DETAILS</p>
+                    <h2 id="issues-title">Validation Issues</h2>
+                </div>
 
-  <text
-    x="805"
-    y="286"
-    text-anchor="middle"
-    class="rule-text"
-  >
-    Email and Country Code Validation
-  </text>
+                <button
+                    id="export-report-button"
+                    class="export-report-button"
+                    type="button"
+                    disabled
+                >
+                    Export Validation Report
+                </button>
+            </div>
 
-  <!-- Validation Report branch -->
-  <path
-    d="M805 325 L805 390 L1110 390"
-    class="branch-arrow"
-  />
+            <div
+                id="issues-container"
+                class="empty-state"
+            >
+                <p class="empty-state-title">
+                    No validation has been executed.
+                </p>
 
-  <rect
-    x="1080"
-    y="340"
-    width="250"
-    height="105"
-    rx="18"
-    class="box report-box"
-    filter="url(#shadow)"
-  />
+                <p class="empty-state-description">
+                    Validation issues will appear here after processing
+                    a supplier CSV file.
+                </p>
+            </div>
+        </section>
 
-  <text
-    x="1205"
-    y="380"
-    text-anchor="middle"
-    class="box-title"
-  >
-    Validation Report
-  </text>
+        <section
+            class="panel enrichment-panel"
+            aria-labelledby="enrichment-title"
+        >
+            <div class="section-heading">
+                <div>
+                    <p class="step-label">STEP 3</p>
+                    <h2 id="enrichment-title">
+                        Country Data Enrichment
+                    </h2>
+                </div>
 
-  <text
-    x="1205"
-    y="410"
-    text-anchor="middle"
-    class="box-description"
-  >
-    Excel-compatible CSV
-  </text>
+                <span class="api-badge">API</span>
+            </div>
 
-  <!-- Validation to server -->
-  <line
-    x1="950"
-    y1="225"
-    x2="1015"
-    y2="225"
-    class="arrow"
-  />
+            <p class="enrichment-description">
+                Add country names, regions, income levels,
+                capital cities, and geographic coordinates
+                using the Country API.
+            </p>
 
-  <!-- Node server -->
-  <text
-    x="1035"
-    y="120"
-    class="section-label"
-  >
-    SERVER
-  </text>
+            <div class="enrichment-actions">
+                <button
+                    id="enrich-button"
+                    class="enrich-button"
+                    type="button"
+                    disabled
+                >
+                    Enrich Supplier Data
+                </button>
 
-  <rect
-    x="1025"
-    y="140"
-    width="260"
-    height="170"
-    rx="18"
-    class="box server-box"
-    filter="url(#shadow)"
-  />
+                <button
+                    id="export-enriched-button"
+                    class="export-enriched-button"
+                    type="button"
+                    disabled
+                >
+                    Export Enriched CSV
+                </button>
+            </div>
 
-  <text
-    x="1155"
-    y="180"
-    text-anchor="middle"
-    class="box-title"
-  >
-    Node.js Server
-  </text>
+            <p
+                id="enrichment-status"
+                class="application-status"
+                role="status"
+                aria-live="polite"
+            >
+                Validate a supplier CSV before enrichment.
+            </p>
+        </section>
+    </main>
 
-  <text
-    x="1155"
-    y="212"
-    text-anchor="middle"
-    class="box-description"
-  >
-    Serves the web application
-  </text>
-
-  <text
-    x="1155"
-    y="237"
-    text-anchor="middle"
-    class="box-description"
-  >
-    Provides internal API endpoints
-  </text>
-
-  <text
-    x="1155"
-    y="262"
-    text-anchor="middle"
-    class="box-description"
-  >
-    Normalizes external responses
-  </text>
-
-  <!-- Server to external API -->
-  <path
-    d="M1155 310 L1155 495"
-    class="arrow"
-  />
-
-  <!-- External API -->
-  <text
-    x="1025"
-    y="490"
-    class="section-label"
-  >
-    EXTERNAL DATA
-  </text>
-
-  <rect
-    x="1025"
-    y="510"
-    width="260"
-    height="120"
-    rx="18"
-    class="box api-box"
-    filter="url(#shadow)"
-  />
-
-  <text
-    x="1155"
-    y="550"
-    text-anchor="middle"
-    class="box-title"
-  >
-    Country API
-  </text>
-
-  <text
-    x="1155"
-    y="580"
-    text-anchor="middle"
-    class="box-description"
-  >
-    Country and regional information
-  </text>
-
-  <text
-    x="1155"
-    y="604"
-    text-anchor="middle"
-    class="box-description"
-  >
-    retrieved by ISO country code
-  </text>
-
-  <!-- API back to enrichment -->
-  <path
-    d="M1025 570 L900 570"
-    class="arrow"
-  />
-
-  <!-- Enrichment -->
-  <text
-    x="610"
-    y="490"
-    class="section-label"
-  >
-    DATA ENRICHMENT
-  </text>
-
-  <rect
-    x="600"
-    y="510"
-    width="300"
-    height="165"
-    rx="18"
-    class="box enrichment-box"
-    filter="url(#shadow)"
-  />
-
-  <text
-    x="750"
-    y="550"
-    text-anchor="middle"
-    class="box-title"
-  >
-    Supplier Enrichment
-  </text>
-
-  <text
-    x="750"
-    y="582"
-    text-anchor="middle"
-    class="box-description"
-  >
-    Country name · Region · Income level
-  </text>
-
-  <text
-    x="750"
-    y="607"
-    text-anchor="middle"
-    class="box-description"
-  >
-    Capital city · Longitude · Latitude
-  </text>
-
-  <rect
-    x="670"
-    y="632"
-    width="160"
-    height="24"
-    rx="12"
-    class="status-pill"
-  />
-
-  <text
-    x="750"
-    y="648"
-    text-anchor="middle"
-    class="small-label"
-  >
-    Per-record status
-  </text>
-
-  <!-- Enrichment to output -->
-  <line
-    x1="600"
-    y1="590"
-    x2="495"
-    y2="590"
-    class="arrow"
-  />
-
-  <!-- Output -->
-  <text
-    x="175"
-    y="490"
-    class="section-label"
-  >
-    OUTPUT
-  </text>
-
-  <rect
-    x="165"
-    y="510"
-    width="330"
-    height="165"
-    rx="18"
-    class="box output-box"
-    filter="url(#shadow)"
-  />
-
-  <text
-    x="330"
-    y="550"
-    text-anchor="middle"
-    class="box-title"
-  >
-    Enriched Supplier CSV
-  </text>
-
-  <text
-    x="330"
-    y="582"
-    text-anchor="middle"
-    class="box-description"
-  >
-    Original supplier data
-  </text>
-
-  <text
-    x="330"
-    y="607"
-    text-anchor="middle"
-    class="box-description"
-  >
-    plus normalized country information
-  </text>
-
-  <text
-    x="330"
-    y="632"
-    text-anchor="middle"
-    class="box-description"
-  >
-    and enrichment status
-  </text>
-
-  <!-- Footer -->
-  <text
-    x="700"
-    y="735"
-    text-anchor="middle"
-    font-family="Arial, sans-serif"
-    font-size="16"
-    fill="#566274"
-  >
-    CSV Import → Validation → Reporting → API Integration → Data Enrichment → CSV Export
-  </text>
-</svg>
+    <script src="./app.js"></script>
+</body>
+</html>
