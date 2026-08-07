@@ -3333,7 +3333,9 @@
     "src/web/app.ts"() {
       init_sync();
       init_supplierValidator();
+      var latestSuppliers = [];
       var latestValidationIssues = [];
+      var latestEnrichedSuppliers = [];
       var latestSourceFileName = "";
       function getElement(selector) {
         const element = document.querySelector(selector);
@@ -3350,7 +3352,12 @@
       var exportReportButton = getElement(
         "#export-report-button"
       );
+      var enrichButton = getElement("#enrich-button");
+      var exportEnrichedButton = getElement(
+        "#export-enriched-button"
+      );
       var applicationStatus = getElement("#application-status");
+      var enrichmentStatus = getElement("#enrichment-status");
       var totalRecordsElement = getElement("#total-records");
       var validRecordsElement = getElement("#valid-records");
       var invalidRecordsElement = getElement("#invalid-records");
@@ -3373,11 +3380,7 @@
         return {
           supplierId: getCsvValue(
             record,
-            [
-              "supplier_id",
-              "supplierId",
-              "Supplier ID"
-            ]
+            ["supplier_id", "supplierId", "Supplier ID"]
           ),
           supplierName: getCsvValue(
             record,
@@ -3397,11 +3400,7 @@
           ),
           email: getCsvValue(
             record,
-            [
-              "email",
-              "Email",
-              "Email Address"
-            ]
+            ["email", "Email", "Email Address"]
           )
         };
       }
@@ -3422,7 +3421,6 @@
       }
       function resetValidationIssues() {
         latestValidationIssues = [];
-        latestSourceFileName = "";
         exportReportButton.disabled = true;
         issuesContainer.className = "empty-state";
         issuesContainer.replaceChildren();
@@ -3433,6 +3431,12 @@
         description.className = "empty-state-description";
         description.textContent = "Validation issues will appear here after processing a supplier CSV file.";
         issuesContainer.append(title, description);
+      }
+      function resetEnrichment() {
+        latestEnrichedSuppliers = [];
+        enrichButton.disabled = true;
+        exportEnrichedButton.disabled = true;
+        enrichmentStatus.textContent = "Validate a supplier CSV before enrichment.";
       }
       function createIssueCard(issue) {
         const card = document.createElement("article");
@@ -3481,22 +3485,8 @@
         const requiresQuotes = escapedValue.includes(",") || escapedValue.includes("\n") || escapedValue.includes("\r") || escapedValue.includes('"');
         return requiresQuotes ? `"${escapedValue}"` : escapedValue;
       }
-      function createValidationReportCsv(issues) {
-        const header = [
-          "Row",
-          "Rule",
-          "Field",
-          "Supplier ID",
-          "Message"
-        ];
-        const rows = issues.map((issue) => [
-          String(issue.rowNumber),
-          issue.rule,
-          issue.field,
-          issue.supplierId,
-          issue.message
-        ]);
-        return [header, ...rows].map(
+      function createCsvText(rows) {
+        return rows.map(
           (row) => row.map(escapeCsvValue).join(",")
         ).join("\r\n");
       }
@@ -3514,36 +3504,178 @@
       function getBaseFileName(fileName) {
         return fileName.replace(/\.csv$/i, "");
       }
-      function exportValidationReport() {
-        if (latestValidationIssues.length === 0) {
-          return;
-        }
-        const csvContent = createValidationReportCsv(
-          latestValidationIssues
-        );
+      function downloadCsv(csvContent, fileName) {
         const utf8Bom = "\uFEFF";
-        const reportBlob = new Blob(
+        const csvBlob = new Blob(
           [utf8Bom, csvContent],
           {
             type: "text/csv;charset=utf-8"
           }
         );
-        const downloadUrl = URL.createObjectURL(reportBlob);
+        const downloadUrl = URL.createObjectURL(csvBlob);
         const downloadLink = document.createElement("a");
-        const sourceBaseName = getBaseFileName(latestSourceFileName);
-        const reportFileName = `${sourceBaseName}_validation_report_${getCurrentDateText()}.csv`;
         downloadLink.href = downloadUrl;
-        downloadLink.download = reportFileName;
+        downloadLink.download = fileName;
         document.body.append(downloadLink);
         downloadLink.click();
         downloadLink.remove();
         URL.revokeObjectURL(downloadUrl);
+      }
+      function exportValidationReport() {
+        if (latestValidationIssues.length === 0) {
+          return;
+        }
+        const rows = [
+          [
+            "Row",
+            "Rule",
+            "Field",
+            "Supplier ID",
+            "Message"
+          ],
+          ...latestValidationIssues.map(
+            (issue) => [
+              String(issue.rowNumber),
+              issue.rule,
+              issue.field,
+              issue.supplierId,
+              issue.message
+            ]
+          )
+        ];
+        const reportFileName = `${getBaseFileName(latestSourceFileName)}_validation_report_${getCurrentDateText()}.csv`;
+        downloadCsv(
+          createCsvText(rows),
+          reportFileName
+        );
         applicationStatus.textContent = `${reportFileName} was exported successfully.`;
+      }
+      async function fetchCountryInformation(countryCode) {
+        const normalizedCountryCode = countryCode.trim().toUpperCase();
+        const response = await fetch(
+          `/api/countries/` + encodeURIComponent(normalizedCountryCode)
+        );
+        if (!response.ok) {
+          throw new Error(
+            `Country information could not be retrieved: ` + normalizedCountryCode
+          );
+        }
+        return await response.json();
+      }
+      async function enrichSupplier(supplier) {
+        const normalizedCountryCode = supplier.countryCode.trim().toUpperCase();
+        if (!/^[A-Z]{2}$/.test(normalizedCountryCode)) {
+          return {
+            ...supplier,
+            countryName: "",
+            region: "",
+            incomeLevel: "",
+            capitalCity: "",
+            longitude: null,
+            latitude: null,
+            enrichmentStatus: "SKIPPED_INVALID_COUNTRY_CODE"
+          };
+        }
+        try {
+          const countryInformation = await fetchCountryInformation(
+            normalizedCountryCode
+          );
+          return {
+            ...supplier,
+            countryCode: countryInformation.countryCode,
+            countryName: countryInformation.countryName,
+            region: countryInformation.region,
+            incomeLevel: countryInformation.incomeLevel,
+            capitalCity: countryInformation.capitalCity,
+            longitude: countryInformation.longitude,
+            latitude: countryInformation.latitude,
+            enrichmentStatus: "ENRICHED"
+          };
+        } catch {
+          return {
+            ...supplier,
+            countryName: "",
+            region: "",
+            incomeLevel: "",
+            capitalCity: "",
+            longitude: null,
+            latitude: null,
+            enrichmentStatus: "API_ERROR"
+          };
+        }
+      }
+      async function enrichSupplierData() {
+        if (latestSuppliers.length === 0) {
+          return;
+        }
+        enrichButton.disabled = true;
+        exportEnrichedButton.disabled = true;
+        enrichmentStatus.textContent = "Retrieving country information...";
+        try {
+          latestEnrichedSuppliers = await Promise.all(
+            latestSuppliers.map(enrichSupplier)
+          );
+          const enrichedCount = latestEnrichedSuppliers.filter(
+            (supplier) => supplier.enrichmentStatus === "ENRICHED"
+          ).length;
+          const skippedCount = latestEnrichedSuppliers.length - enrichedCount;
+          exportEnrichedButton.disabled = false;
+          enrichmentStatus.textContent = `${enrichedCount} supplier records were enriched. ${skippedCount} records were skipped or failed.`;
+        } catch (error) {
+          latestEnrichedSuppliers = [];
+          enrichmentStatus.textContent = error instanceof Error ? error.message : "Country data enrichment failed.";
+        } finally {
+          enrichButton.disabled = false;
+        }
+      }
+      function exportEnrichedCsv() {
+        if (latestEnrichedSuppliers.length === 0) {
+          return;
+        }
+        const rows = [
+          [
+            "supplierId",
+            "supplierName",
+            "countryCode",
+            "email",
+            "countryName",
+            "region",
+            "incomeLevel",
+            "capitalCity",
+            "longitude",
+            "latitude",
+            "enrichmentStatus"
+          ],
+          ...latestEnrichedSuppliers.map(
+            (supplier) => [
+              supplier.supplierId,
+              supplier.supplierName,
+              supplier.countryCode,
+              supplier.email,
+              supplier.countryName,
+              supplier.region,
+              supplier.incomeLevel,
+              supplier.capitalCity,
+              supplier.longitude === null ? "" : String(supplier.longitude),
+              supplier.latitude === null ? "" : String(supplier.latitude),
+              supplier.enrichmentStatus
+            ]
+          )
+        ];
+        const enrichedFileName = `${getBaseFileName(latestSourceFileName)}_enriched_${getCurrentDateText()}.csv`;
+        downloadCsv(
+          createCsvText(rows),
+          enrichedFileName
+        );
+        enrichmentStatus.textContent = `${enrichedFileName} was exported successfully.`;
       }
       function handleFileSelection() {
         const selectedFile = csvFileInput.files?.[0];
+        latestSuppliers = [];
+        latestSourceFileName = "";
         resetValidationSummary();
         resetValidationIssues();
+        resetEnrichment();
         if (!selectedFile) {
           selectedFileName.textContent = "No file selected";
           validateButton.disabled = true;
@@ -3565,12 +3697,13 @@
           return;
         }
         validateButton.disabled = true;
-        exportReportButton.disabled = true;
         applicationStatus.textContent = "Validating supplier data...";
         try {
           const csvText = await selectedFile.text();
           const suppliers = parseSupplierCsv(csvText);
           const validationResult = validateSuppliers(suppliers);
+          latestSuppliers = suppliers;
+          latestSourceFileName = selectedFile.name;
           totalRecordsElement.textContent = String(validationResult.totalRecords);
           validRecordsElement.textContent = String(validationResult.validRecords);
           invalidRecordsElement.textContent = String(validationResult.invalidRecords);
@@ -3581,22 +3714,16 @@
           latestValidationIssues = [
             ...validationResult.issues
           ];
-          latestSourceFileName = selectedFile.name;
           exportReportButton.disabled = validationResult.issues.length === 0;
+          enrichButton.disabled = suppliers.length === 0;
+          enrichmentStatus.textContent = "Supplier data is ready for country enrichment.";
           applicationStatus.textContent = `${selectedFile.name} was validated successfully.`;
         } catch (error) {
+          latestSuppliers = [];
           resetValidationSummary();
           resetValidationIssues();
-          issuesContainer.className = "empty-state";
-          issuesContainer.replaceChildren();
-          const title = document.createElement("p");
-          title.className = "empty-state-title";
-          title.textContent = "The CSV file could not be validated.";
-          const description = document.createElement("p");
-          description.className = "empty-state-description";
-          description.textContent = error instanceof Error ? error.message : "An unexpected error occurred.";
-          issuesContainer.append(title, description);
-          applicationStatus.textContent = "Please confirm the CSV format and try again.";
+          resetEnrichment();
+          applicationStatus.textContent = error instanceof Error ? error.message : "The CSV file could not be validated.";
         } finally {
           validateButton.disabled = false;
         }
@@ -3614,6 +3741,16 @@
       exportReportButton.addEventListener(
         "click",
         exportValidationReport
+      );
+      enrichButton.addEventListener(
+        "click",
+        () => {
+          void enrichSupplierData();
+        }
+      );
+      exportEnrichedButton.addEventListener(
+        "click",
+        exportEnrichedCsv
       );
     }
   });

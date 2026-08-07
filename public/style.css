@@ -471,3 +471,79 @@ h2 {
         width: 100%;
     }
 }
+/* ==========================================
+   Country Data Enrichment
+   Country API連携とEnriched CSV出力
+   ========================================== */
+
+.api-badge {
+    padding: 5px 11px;
+    background-color: #e8f7f4;
+    border-radius: 999px;
+    color: #087f6f;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.enrichment-description {
+    margin-bottom: 22px;
+    color: var(--muted-text-color);
+}
+
+.enrichment-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.enrich-button,
+.export-enriched-button {
+    min-height: 48px;
+    padding: 11px 20px;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        color 160ms ease,
+        transform 160ms ease;
+}
+
+.enrich-button {
+    background-color: #087f6f;
+    border: 1px solid #087f6f;
+    color: #ffffff;
+}
+
+.enrich-button:not(:disabled):hover {
+    background-color: #06695d;
+    transform: translateY(-1px);
+}
+
+.export-enriched-button {
+    background-color: var(--surface-color);
+    border: 1px solid #087f6f;
+    color: #087f6f;
+}
+
+.export-enriched-button:not(:disabled):hover {
+    background-color: #087f6f;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.enrich-button:disabled,
+.export-enriched-button:disabled {
+    background-color: var(--disabled-color);
+    border-color: var(--disabled-color);
+    color: #ffffff;
+    cursor: not-allowed;
+    transform: none;
+}
+
+@media (max-width: 620px) {
+    .enrichment-actions {
+        grid-template-columns: 1fr;
+    }
+}

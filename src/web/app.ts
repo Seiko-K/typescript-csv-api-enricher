@@ -1,37 +1,32 @@
 // ==========================================
 // Web Interface Controller
-// Web画面・Validation Engine・CSV出力を接続する
+// Validation・Country API・CSV出力を接続する
 // ==========================================
 
 import { parse } from "csv-parse/browser/esm/sync";
 
-import type { Supplier } from "../types/supplier";
-import type { ValidationIssue } from "../types/validation";
+import type { CountryInformation } from
+    "../types/country";
+
+import type { EnrichedSupplier } from
+    "../types/enrichedSupplier";
+
+import type { Supplier } from
+    "../types/supplier";
+
+import type { ValidationIssue } from
+    "../types/validation";
 
 import { validateSuppliers } from
     "../validation/supplierValidator";
 
-/**
- * CSVパーサーが返す1行分のデータです。
- */
 type CsvRecord = Record<string, string>;
 
-/**
- * 最後に実行した検証結果を保持します。
- *
- * Exportボタンが押されたときに、
- * 画面に表示したものと同じ結果をCSVへ出力します。
- */
+let latestSuppliers: Supplier[] = [];
 let latestValidationIssues: ValidationIssue[] = [];
-
-/**
- * 最後に選択されたCSVファイル名を保持します。
- */
+let latestEnrichedSuppliers: EnrichedSupplier[] = [];
 let latestSourceFileName = "";
 
-/**
- * HTML要素を安全に取得します。
- */
 function getElement<T extends Element>(
     selector: string
 ): T {
@@ -64,8 +59,19 @@ const exportReportButton =
         "#export-report-button"
     );
 
+const enrichButton =
+    getElement<HTMLButtonElement>("#enrich-button");
+
+const exportEnrichedButton =
+    getElement<HTMLButtonElement>(
+        "#export-enriched-button"
+    );
+
 const applicationStatus =
     getElement<HTMLElement>("#application-status");
+
+const enrichmentStatus =
+    getElement<HTMLElement>("#enrichment-status");
 
 const totalRecordsElement =
     getElement<HTMLElement>("#total-records");
@@ -82,9 +88,6 @@ const issuesDetectedElement =
 const issuesContainer =
     getElement<HTMLElement>("#issues-container");
 
-/**
- * 選択されたファイルがCSVか確認します。
- */
 function isCsvFile(file: File): boolean {
     const normalizedFileName =
         file.name.toLowerCase();
@@ -95,9 +98,6 @@ function isCsvFile(file: File): boolean {
     );
 }
 
-/**
- * CSVレコードから候補列名を探して値を返します。
- */
 function getCsvValue(
     record: CsvRecord,
     candidateHeaders: string[]
@@ -113,20 +113,13 @@ function getCsvValue(
     return "";
 }
 
-/**
- * CSVの1行をSupplier型へ変換します。
- */
 function mapCsvRecordToSupplier(
     record: CsvRecord
 ): Supplier {
     return {
         supplierId: getCsvValue(
             record,
-            [
-                "supplier_id",
-                "supplierId",
-                "Supplier ID"
-            ]
+            ["supplier_id", "supplierId", "Supplier ID"]
         ),
 
         supplierName: getCsvValue(
@@ -149,18 +142,11 @@ function mapCsvRecordToSupplier(
 
         email: getCsvValue(
             record,
-            [
-                "email",
-                "Email",
-                "Email Address"
-            ]
+            ["email", "Email", "Email Address"]
         )
     };
 }
 
-/**
- * CSVテキストをSupplier配列へ変換します。
- */
 function parseSupplierCsv(
     csvText: string
 ): Supplier[] {
@@ -174,9 +160,6 @@ function parseSupplierCsv(
     return records.map(mapCsvRecordToSupplier);
 }
 
-/**
- * Summary表示を初期化します。
- */
 function resetValidationSummary(): void {
     totalRecordsElement.textContent = "–";
     validRecordsElement.textContent = "–";
@@ -184,12 +167,8 @@ function resetValidationSummary(): void {
     issuesDetectedElement.textContent = "–";
 }
 
-/**
- * Validation Issues表示を初期化します。
- */
 function resetValidationIssues(): void {
     latestValidationIssues = [];
-    latestSourceFileName = "";
 
     exportReportButton.disabled = true;
 
@@ -211,9 +190,16 @@ function resetValidationIssues(): void {
     issuesContainer.append(title, description);
 }
 
-/**
- * 1件のValidation Issueをカードへ変換します。
- */
+function resetEnrichment(): void {
+    latestEnrichedSuppliers = [];
+
+    enrichButton.disabled = true;
+    exportEnrichedButton.disabled = true;
+
+    enrichmentStatus.textContent =
+        "Validate a supplier CSV before enrichment.";
+}
+
 function createIssueCard(
     issue: ValidationIssue
 ): HTMLElement {
@@ -254,9 +240,6 @@ function createIssueCard(
     return card;
 }
 
-/**
- * 検証エラーを画面へ表示します。
- */
 function renderValidationIssues(
     issues: ValidationIssue[]
 ): void {
@@ -294,12 +277,6 @@ function renderValidationIssues(
     }
 }
 
-/**
- * CSVセルとして安全な文字列へ変換します。
- *
- * カンマ・改行・ダブルクォートを含む値は、
- * ダブルクォートで囲みます。
- */
 function escapeCsvValue(value: string): string {
     const escapedValue =
         value.replaceAll("\"", "\"\"");
@@ -315,32 +292,10 @@ function escapeCsvValue(value: string): string {
         : escapedValue;
 }
 
-/**
- * Validation Issue一覧からCSVテキストを生成します。
- *
- * 改行コードはWindows・macOSのExcelで扱いやすい
- * CRLF形式を使用します。
- */
-function createValidationReportCsv(
-    issues: ValidationIssue[]
+function createCsvText(
+    rows: string[][]
 ): string {
-    const header = [
-        "Row",
-        "Rule",
-        "Field",
-        "Supplier ID",
-        "Message"
-    ];
-
-    const rows = issues.map((issue) => [
-        String(issue.rowNumber),
-        issue.rule,
-        issue.field,
-        issue.supplierId,
-        issue.message
-    ]);
-
-    return [header, ...rows]
+    return rows
         .map((row) =>
             row
                 .map(escapeCsvValue)
@@ -349,9 +304,6 @@ function createValidationReportCsv(
         .join("\r\n");
 }
 
-/**
- * 現在日付をYYYY-MM-DD形式で返します。
- */
 function getCurrentDateText(): string {
     const currentDate = new Date();
 
@@ -368,32 +320,17 @@ function getCurrentDateText(): string {
     return `${year}-${month}-${day}`;
 }
 
-/**
- * 元CSVの拡張子を除いたファイル名を返します。
- */
 function getBaseFileName(fileName: string): string {
     return fileName.replace(/\.csv$/i, "");
 }
 
-/**
- * Validation ReportをCSVファイルとして保存します。
- *
- * ブラウザ標準のダウンロード機能を利用するため、
- * Windows・macOSで同じ処理を使用できます。
- */
-function exportValidationReport(): void {
-    if (latestValidationIssues.length === 0) {
-        return;
-    }
-
-    const csvContent = createValidationReportCsv(
-        latestValidationIssues
-    );
-
-    // UTF-8 BOMを追加し、Excelでの文字化けを抑えます。
+function downloadCsv(
+    csvContent: string,
+    fileName: string
+): void {
     const utf8Bom = "\uFEFF";
 
-    const reportBlob = new Blob(
+    const csvBlob = new Blob(
         [utf8Bom, csvContent],
         {
             type: "text/csv;charset=utf-8"
@@ -401,40 +338,258 @@ function exportValidationReport(): void {
     );
 
     const downloadUrl =
-        URL.createObjectURL(reportBlob);
+        URL.createObjectURL(csvBlob);
 
     const downloadLink =
         document.createElement("a");
 
-    const sourceBaseName =
-        getBaseFileName(latestSourceFileName);
-
-    const reportFileName =
-        `${sourceBaseName}_validation_report_` +
-        `${getCurrentDateText()}.csv`;
-
     downloadLink.href = downloadUrl;
-    downloadLink.download = reportFileName;
+    downloadLink.download = fileName;
 
     document.body.append(downloadLink);
     downloadLink.click();
     downloadLink.remove();
 
     URL.revokeObjectURL(downloadUrl);
+}
+
+function exportValidationReport(): void {
+    if (latestValidationIssues.length === 0) {
+        return;
+    }
+
+    const rows = [
+        [
+            "Row",
+            "Rule",
+            "Field",
+            "Supplier ID",
+            "Message"
+        ],
+
+        ...latestValidationIssues.map(
+            (issue) => [
+                String(issue.rowNumber),
+                issue.rule,
+                issue.field,
+                issue.supplierId,
+                issue.message
+            ]
+        )
+    ];
+
+    const reportFileName =
+        `${getBaseFileName(latestSourceFileName)}` +
+        `_validation_report_` +
+        `${getCurrentDateText()}.csv`;
+
+    downloadCsv(
+        createCsvText(rows),
+        reportFileName
+    );
 
     applicationStatus.textContent =
         `${reportFileName} was exported successfully.`;
 }
 
 /**
- * ファイル選択時の処理です。
+ * 自分たちのNode.jsサーバーから国情報を取得します。
  */
+async function fetchCountryInformation(
+    countryCode: string
+): Promise<CountryInformation> {
+    const normalizedCountryCode =
+        countryCode.trim().toUpperCase();
+
+    const response = await fetch(
+        `/api/countries/` +
+        encodeURIComponent(normalizedCountryCode)
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            `Country information could not be retrieved: ` +
+            normalizedCountryCode
+        );
+    }
+
+    return await response.json() as CountryInformation;
+}
+
+/**
+ * 1件のSupplierへ国情報を追加します。
+ */
+async function enrichSupplier(
+    supplier: Supplier
+): Promise<EnrichedSupplier> {
+    const normalizedCountryCode =
+        supplier.countryCode.trim().toUpperCase();
+
+    if (!/^[A-Z]{2}$/.test(normalizedCountryCode)) {
+        return {
+            ...supplier,
+            countryName: "",
+            region: "",
+            incomeLevel: "",
+            capitalCity: "",
+            longitude: null,
+            latitude: null,
+            enrichmentStatus:
+                "SKIPPED_INVALID_COUNTRY_CODE"
+        };
+    }
+
+    try {
+        const countryInformation =
+            await fetchCountryInformation(
+                normalizedCountryCode
+            );
+
+        return {
+            ...supplier,
+            countryCode:
+                countryInformation.countryCode,
+            countryName:
+                countryInformation.countryName,
+            region:
+                countryInformation.region,
+            incomeLevel:
+                countryInformation.incomeLevel,
+            capitalCity:
+                countryInformation.capitalCity,
+            longitude:
+                countryInformation.longitude,
+            latitude:
+                countryInformation.latitude,
+            enrichmentStatus: "ENRICHED"
+        };
+    } catch {
+        return {
+            ...supplier,
+            countryName: "",
+            region: "",
+            incomeLevel: "",
+            capitalCity: "",
+            longitude: null,
+            latitude: null,
+            enrichmentStatus: "API_ERROR"
+        };
+    }
+}
+
+/**
+ * Supplier全件へ国情報を追加します。
+ */
+async function enrichSupplierData(): Promise<void> {
+    if (latestSuppliers.length === 0) {
+        return;
+    }
+
+    enrichButton.disabled = true;
+    exportEnrichedButton.disabled = true;
+
+    enrichmentStatus.textContent =
+        "Retrieving country information...";
+
+    try {
+        latestEnrichedSuppliers =
+            await Promise.all(
+                latestSuppliers.map(enrichSupplier)
+            );
+
+        const enrichedCount =
+            latestEnrichedSuppliers.filter(
+                (supplier) =>
+                    supplier.enrichmentStatus ===
+                    "ENRICHED"
+            ).length;
+
+        const skippedCount =
+            latestEnrichedSuppliers.length -
+            enrichedCount;
+
+        exportEnrichedButton.disabled = false;
+
+        enrichmentStatus.textContent =
+            `${enrichedCount} supplier records were enriched. ` +
+            `${skippedCount} records were skipped or failed.`;
+    } catch (error: unknown) {
+        latestEnrichedSuppliers = [];
+
+        enrichmentStatus.textContent =
+            error instanceof Error
+                ? error.message
+                : "Country data enrichment failed.";
+    } finally {
+        enrichButton.disabled = false;
+    }
+}
+
+function exportEnrichedCsv(): void {
+    if (latestEnrichedSuppliers.length === 0) {
+        return;
+    }
+
+    const rows = [
+        [
+            "supplierId",
+            "supplierName",
+            "countryCode",
+            "email",
+            "countryName",
+            "region",
+            "incomeLevel",
+            "capitalCity",
+            "longitude",
+            "latitude",
+            "enrichmentStatus"
+        ],
+
+        ...latestEnrichedSuppliers.map(
+            (supplier) => [
+                supplier.supplierId,
+                supplier.supplierName,
+                supplier.countryCode,
+                supplier.email,
+                supplier.countryName,
+                supplier.region,
+                supplier.incomeLevel,
+                supplier.capitalCity,
+                supplier.longitude === null
+                    ? ""
+                    : String(supplier.longitude),
+                supplier.latitude === null
+                    ? ""
+                    : String(supplier.latitude),
+                supplier.enrichmentStatus
+            ]
+        )
+    ];
+
+    const enrichedFileName =
+        `${getBaseFileName(latestSourceFileName)}` +
+        `_enriched_` +
+        `${getCurrentDateText()}.csv`;
+
+    downloadCsv(
+        createCsvText(rows),
+        enrichedFileName
+    );
+
+    enrichmentStatus.textContent =
+        `${enrichedFileName} was exported successfully.`;
+}
+
 function handleFileSelection(): void {
     const selectedFile =
         csvFileInput.files?.[0];
 
+    latestSuppliers = [];
+    latestSourceFileName = "";
+
     resetValidationSummary();
     resetValidationIssues();
+    resetEnrichment();
 
     if (!selectedFile) {
         selectedFileName.textContent =
@@ -466,9 +621,6 @@ function handleFileSelection(): void {
         "The CSV file is ready for validation.";
 }
 
-/**
- * CSV読込と検証を実行します。
- */
 async function handleValidationRequest(): Promise<void> {
     const selectedFile =
         csvFileInput.files?.[0];
@@ -478,7 +630,6 @@ async function handleValidationRequest(): Promise<void> {
     }
 
     validateButton.disabled = true;
-    exportReportButton.disabled = true;
 
     applicationStatus.textContent =
         "Validating supplier data...";
@@ -491,6 +642,9 @@ async function handleValidationRequest(): Promise<void> {
 
         const validationResult =
             validateSuppliers(suppliers);
+
+        latestSuppliers = suppliers;
+        latestSourceFileName = selectedFile.name;
 
         totalRecordsElement.textContent =
             String(validationResult.totalRecords);
@@ -512,42 +666,28 @@ async function handleValidationRequest(): Promise<void> {
             ...validationResult.issues
         ];
 
-        latestSourceFileName =
-            selectedFile.name;
-
-        // エラーがある場合だけレポート出力を有効にします。
         exportReportButton.disabled =
             validationResult.issues.length === 0;
+
+        enrichButton.disabled =
+            suppliers.length === 0;
+
+        enrichmentStatus.textContent =
+            "Supplier data is ready for country enrichment.";
 
         applicationStatus.textContent =
             `${selectedFile.name} was validated successfully.`;
     } catch (error: unknown) {
+        latestSuppliers = [];
+
         resetValidationSummary();
         resetValidationIssues();
-
-        issuesContainer.className = "empty-state";
-        issuesContainer.replaceChildren();
-
-        const title = document.createElement("p");
-        title.className = "empty-state-title";
-        title.textContent =
-            "The CSV file could not be validated.";
-
-        const description =
-            document.createElement("p");
-
-        description.className =
-            "empty-state-description";
-
-        description.textContent =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred.";
-
-        issuesContainer.append(title, description);
+        resetEnrichment();
 
         applicationStatus.textContent =
-            "Please confirm the CSV format and try again.";
+            error instanceof Error
+                ? error.message
+                : "The CSV file could not be validated.";
     } finally {
         validateButton.disabled = false;
     }
@@ -572,4 +712,16 @@ validateButton.addEventListener(
 exportReportButton.addEventListener(
     "click",
     exportValidationReport
+);
+
+enrichButton.addEventListener(
+    "click",
+    () => {
+        void enrichSupplierData();
+    }
+);
+
+exportEnrichedButton.addEventListener(
+    "click",
+    exportEnrichedCsv
 );

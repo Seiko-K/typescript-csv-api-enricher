@@ -10,7 +10,7 @@
 
     <meta
         name="description"
-        content="Validate supplier CSV data and review data quality issues."
+        content="Validate and enrich supplier CSV data using external country information."
     >
 
     <title>Business Data Processing Toolkit</title>
@@ -20,23 +20,18 @@
 
 <body>
     <main class="page-container">
-        <!--
-            アプリケーションのタイトル領域
-        -->
         <header class="page-header">
             <p class="eyebrow">BUSINESS DATA QUALITY</p>
 
             <h1>Business Data Processing Toolkit</h1>
 
             <p class="page-description">
-                Select a supplier CSV file to validate required values,
-                duplicate IDs, and email formats.
+                Validate supplier CSV data, enrich country information,
+                and export reusable business reports.
             </p>
         </header>
 
-        <!--
-            CSVファイル選択領域
-        -->
+        <!-- STEP 1: CSV Selection -->
         <section
             class="panel upload-panel"
             aria-labelledby="upload-title"
@@ -98,9 +93,7 @@
             </p>
         </section>
 
-        <!--
-            検証結果集計
-        -->
+        <!-- STEP 2: Validation Summary -->
         <section
             class="panel result-panel"
             aria-labelledby="result-title"
@@ -167,9 +160,7 @@
             </div>
         </section>
 
-        <!--
-            個別の検証エラーとCSV出力
-        -->
+        <!-- Validation Issues -->
         <section
             class="panel issues-panel"
             aria-labelledby="issues-title"
@@ -203,6 +194,58 @@
                     a supplier CSV file.
                 </p>
             </div>
+        </section>
+
+        <!-- STEP 3: API Enrichment -->
+        <section
+            class="panel enrichment-panel"
+            aria-labelledby="enrichment-title"
+        >
+            <div class="section-heading">
+                <div>
+                    <p class="step-label">STEP 3</p>
+                    <h2 id="enrichment-title">
+                        Country Data Enrichment
+                    </h2>
+                </div>
+
+                <span class="api-badge">API</span>
+            </div>
+
+            <p class="enrichment-description">
+                Add country names, regions, income levels,
+                capital cities, and geographic coordinates
+                using the Country API.
+            </p>
+
+            <div class="enrichment-actions">
+                <button
+                    id="enrich-button"
+                    class="enrich-button"
+                    type="button"
+                    disabled
+                >
+                    Enrich Supplier Data
+                </button>
+
+                <button
+                    id="export-enriched-button"
+                    class="export-enriched-button"
+                    type="button"
+                    disabled
+                >
+                    Export Enriched CSV
+                </button>
+            </div>
+
+            <p
+                id="enrichment-status"
+                class="application-status"
+                role="status"
+                aria-live="polite"
+            >
+                Validate a supplier CSV before enrichment.
+            </p>
         </section>
     </main>
 
