@@ -4,18 +4,23 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "build": "tsc",
+  "build:web": "esbuild src/web/app.ts --bundle --platform=browser --format=iife --outfile=public/app.js",
+  "start": "node dist/server.js",
+  "dev": "npm run build && npm run build:web && npm run start"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^26.1.1",
     "esbuild": "^0.28.1",
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "csv-parse": "^7.0.1"
+    "csv-parse": "^7.0.1",
+    "express": "^5.2.1"
   }
 }
