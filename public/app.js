@@ -3215,6 +3215,13 @@
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailPattern.test(normalizedEmail);
   }
+  function isValidCountryCodeFormat(value) {
+    const normalizedCountryCode = value.trim();
+    const countryCodePattern = /^[A-Za-z]{2}$/;
+    return countryCodePattern.test(
+      normalizedCountryCode
+    );
+  }
   function validateSuppliers(suppliers) {
     const issues = [];
     const supplierIdCounts = /* @__PURE__ */ new Map();
@@ -3223,7 +3230,9 @@
       if (normalizedSupplierId.length === 0) {
         continue;
       }
-      const currentCount = supplierIdCounts.get(normalizedSupplierId) ?? 0;
+      const currentCount = supplierIdCounts.get(
+        normalizedSupplierId
+      ) ?? 0;
       supplierIdCounts.set(
         normalizedSupplierId,
         currentCount + 1
@@ -3268,7 +3277,9 @@
         });
       }
       const normalizedSupplierId = supplier.supplierId.trim();
-      const supplierIdCount = supplierIdCounts.get(normalizedSupplierId) ?? 0;
+      const supplierIdCount = supplierIdCounts.get(
+        normalizedSupplierId
+      ) ?? 0;
       if (normalizedSupplierId.length > 0 && supplierIdCount > 1) {
         issues.push({
           rowNumber,
@@ -3287,9 +3298,22 @@
           message: `Invalid email format: ${supplier.email.trim()}`
         });
       }
+      if (!isEmpty(supplier.countryCode) && !isValidCountryCodeFormat(
+        supplier.countryCode
+      )) {
+        issues.push({
+          rowNumber,
+          supplierId: supplier.supplierId,
+          field: "countryCode",
+          rule: "INVALID_COUNTRY_CODE_FORMAT",
+          message: `Invalid country code format: ${supplier.countryCode.trim()}. Use a two-letter country code.`
+        });
+      }
     });
     const invalidRowNumbers = new Set(
-      issues.map((issue) => issue.rowNumber)
+      issues.map(
+        (issue) => issue.rowNumber
+      )
     );
     return {
       totalRecords: suppliers.length,
