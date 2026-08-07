@@ -45,7 +45,7 @@ The browser interface validates supplier master data and provides a summary of t
 
 <p align="center">
   <img
-    src="images/web-country-enrichment.png"
+    src="images/web-country-enrichment-v0.1.0.png"
     width="900"
     alt="Supplier country data enrichment"
   >
