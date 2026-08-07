@@ -18,8 +18,54 @@ The current implementation provides an end-to-end browser-based workflow for sup
 ## Architecture
 
 <p align="center">
-  <img src="images/architecture.svg" width="900" alt="TypeScript CSV API Enricher Architecture">
+  <img
+    src="images/architecture.svg"
+    width="900"
+    alt="TypeScript CSV API Enricher Architecture"
+  >
 </p>
+
+---
+
+## Screenshots
+
+### Supplier Data Validation
+
+<p align="center">
+  <img
+    src="images/web-validation-summary.png"
+    width="900"
+    alt="Supplier CSV validation dashboard"
+  >
+</p>
+
+The browser interface validates supplier master data and provides a summary of total, valid, invalid, and detected issue counts.
+
+### Country Data Enrichment
+
+<p align="center">
+  <img
+    src="images/web-country-enrichment.png"
+    width="900"
+    alt="Supplier country data enrichment"
+  >
+</p>
+
+Validated supplier records can be enriched with external country information through the Country API.
+
+The enrichment process continues even when individual records contain invalid or missing country codes.
+
+### Enriched CSV Output
+
+<p align="center">
+  <img
+    src="images/enriched-csv-output.png"
+    width="900"
+    alt="Enriched supplier CSV output"
+  >
+</p>
+
+The exported CSV preserves the original supplier data and adds normalized country information together with a per-record enrichment status.
 
 ---
 
@@ -39,8 +85,6 @@ The current implementation provides an end-to-end browser-based workflow for sup
 
 ✓ Reusable supplier data model
 
----
-
 ### Data Validation
 
 ✓ Required-value validation
@@ -57,9 +101,7 @@ The current implementation provides an end-to-end browser-based workflow for sup
 
 ✓ Validation issue summary
 
-✓ Detailed validation issue cards
-
----
+✓ Detailed validation issue display
 
 ### Validation Report
 
@@ -74,8 +116,6 @@ The current implementation provides an end-to-end browser-based workflow for sup
 ✓ Supplier ID tracking
 
 ✓ Human-readable error messages
-
----
 
 ### Country API Integration
 
@@ -92,8 +132,6 @@ The current implementation provides an end-to-end browser-based workflow for sup
 ✓ Graceful handling of invalid country codes
 
 ✓ Graceful handling of API failures
-
----
 
 ### Data Enrichment
 
@@ -114,8 +152,6 @@ The current implementation provides an end-to-end browser-based workflow for sup
 ✓ Invalid records skipped without stopping the full process
 
 ✓ Enriched supplier CSV export
-
----
 
 ### Web Interface
 
@@ -213,6 +249,92 @@ Whether a valid two-letter code can be resolved to country information is handle
 
 ---
 
+## Validation Example
+
+The included sample supplier data intentionally contains several data-quality issues.
+
+```text
+Total records: 6
+Valid records: 2
+Invalid records: 4
+Issues detected: 5
+```
+
+Detected issues:
+
+```text
+Row 2 | DUPLICATE_SUPPLIER_ID
+Row 4 | INVALID_COUNTRY_CODE_FORMAT
+Row 6 | REQUIRED_VALUE
+Row 6 | INVALID_EMAIL_FORMAT
+Row 7 | DUPLICATE_SUPPLIER_ID
+```
+
+This sample demonstrates that multiple validation rules can be applied to the same CSV dataset before enrichment begins.
+
+---
+
+## Validation Report
+
+Validation issues can be exported as an Excel-compatible CSV report.
+
+The report contains:
+
+```text
+Row
+Rule
+Field
+Supplier ID
+Message
+```
+
+Example:
+
+```text
+Row 2 | DUPLICATE_SUPPLIER_ID | supplierId | SUP001
+Row 4 | INVALID_COUNTRY_CODE_FORMAT | countryCode | SUP003
+Row 6 | REQUIRED_VALUE | countryCode | SUP005
+Row 6 | INVALID_EMAIL_FORMAT | email | SUP005
+Row 7 | DUPLICATE_SUPPLIER_ID | supplierId | SUP001
+```
+
+This provides a reusable issue list for correction, review, or operational follow-up.
+
+---
+
+## Country Data Enrichment
+
+After validation, supplier records can be enriched using external country information.
+
+For valid country codes, the application retrieves and normalizes:
+
+```text
+Country Name
+Region
+Income Level
+Capital City
+Longitude
+Latitude
+```
+
+Example:
+
+```text
+Country Code: US
+Country Name: United States
+Region: North America
+Income Level: High income
+Capital City: Washington D.C.
+Longitude: -77.032
+Latitude: 38.8895
+```
+
+The API-specific response structure is isolated from the application's internal data model.
+
+This allows the external provider to be replaced or extended without tightly coupling the rest of the application to one API response format.
+
+---
+
 ## Enrichment Status
 
 Each exported supplier record includes an `enrichmentStatus` field.
@@ -225,11 +347,20 @@ Each exported supplier record includes an `enrichmentStatus` field.
 
 A failed or invalid record does not stop enrichment of the remaining supplier records.
 
+For the included sample:
+
+```text
+4 supplier records were enriched.
+2 records were skipped or failed.
+```
+
+This fail-safe approach allows batch processing to continue while preserving the processing result for every supplier record.
+
 ---
 
-## Enriched Data
+## Enriched CSV
 
-The enriched CSV contains the original supplier fields plus external country information.
+The enriched CSV contains the original supplier fields plus normalized country information.
 
 ```text
 supplierId
@@ -245,7 +376,7 @@ latitude
 enrichmentStatus
 ```
 
-Example:
+Example enriched record:
 
 ```text
 SUP001
@@ -260,6 +391,8 @@ Washington D.C.
 38.8895
 ENRICHED
 ```
+
+Records that cannot be enriched remain in the exported CSV with an appropriate `enrichmentStatus`.
 
 ---
 
@@ -285,7 +418,7 @@ ENRICHED
 - Validate CSV files before system import
 - Identify incomplete or malformed records
 - Track invalid records and validation reasons
-- Enrich clean reference data before migration
+- Enrich reference data before migration
 
 ### Back-office Automation
 
@@ -302,7 +435,7 @@ ENRICHED
 
 Select a supplier master CSV file from the browser.
 
-The application reads the file locally and converts the CSV rows into structured Supplier records.
+The application reads the selected file and converts the CSV rows into structured Supplier records.
 
 ### Step 2 — Validate Supplier Data
 
@@ -318,86 +451,29 @@ The interface displays:
 
 A validation report can then be exported as CSV.
 
-### Step 3 — Country Data Enrichment
+### Step 3 — Enrich Supplier Data
 
-After validation, select:
+Select:
 
 ```text
 Enrich Supplier Data
 ```
 
-The application sends valid-format country codes through the local Node.js server to the external Country API.
+The application sends valid-format country codes through the Node.js server to the external Country API.
 
 Country information is normalized and added to each supplier record.
 
-Finally, select:
+Invalid country-code records are skipped without interrupting enrichment of the remaining records.
+
+### Step 4 — Export Enriched CSV
+
+After enrichment, select:
 
 ```text
 Export Enriched CSV
 ```
 
-to download the enriched supplier master.
-
----
-
-## Example Validation Result
-
-Using the included sample supplier data:
-
-```text
-Total records: 6
-Valid records: 2
-Invalid records: 4
-Issues detected: 5
-```
-
-Example issues:
-
-```text
-Row 2 | DUPLICATE_SUPPLIER_ID
-Row 4 | INVALID_COUNTRY_CODE_FORMAT
-Row 6 | REQUIRED_VALUE
-Row 6 | INVALID_EMAIL_FORMAT
-Row 7 | DUPLICATE_SUPPLIER_ID
-```
-
-The sample intentionally contains invalid records so the validation workflow can be demonstrated.
-
----
-
-## Example Enrichment Result
-
-Using the sample supplier data:
-
-```text
-4 supplier records were enriched.
-2 records were skipped or failed.
-```
-
-Valid two-letter country codes such as:
-
-```text
-US
-FR
-JP
-```
-
-are enriched through the Country API.
-
-Invalid or missing values such as:
-
-```text
-DEU
-(empty)
-```
-
-are retained in the output with:
-
-```text
-SKIPPED_INVALID_COUNTRY_CODE
-```
-
-This allows the full batch to continue even when individual records cannot be enriched.
+The application downloads the enriched supplier master as an Excel-compatible CSV file.
 
 ---
 
@@ -409,15 +485,11 @@ This allows the full batch to continue even when individual records cannot be en
 - npm
 - Modern web browser
 
----
-
 ### Install Dependencies
 
 ```bash
 npm install
 ```
-
----
 
 ### Start the Application
 
@@ -425,15 +497,11 @@ npm install
 npm run dev
 ```
 
-The development command performs the required build steps and starts the local Node.js server.
-
-Open:
+Open the local application in your browser.
 
 ```text
 http://localhost:3000
 ```
-
-in your browser.
 
 ---
 
@@ -495,15 +563,13 @@ External API response structures are kept separate from internal application mod
 
 Validation rules are implemented independently from the browser interface.
 
-This allows the same validation engine to be reused by different interfaces or future processing workflows.
+This allows the validation engine to remain reusable and easier to extend.
 
 ### API Layer
 
 External country API communication is isolated behind a dedicated API adapter.
 
-The rest of the application works with the internal `CountryInformation` model rather than depending directly on the external API response structure.
-
-This makes the external provider easier to replace in the future.
+The rest of the application works with normalized internal country information rather than depending directly on an external response structure.
 
 ### Web Layer
 
@@ -512,7 +578,7 @@ The browser interface handles:
 - File selection
 - Validation execution
 - Result rendering
-- Report export
+- Validation report export
 - API enrichment requests
 - Enriched CSV export
 
@@ -521,7 +587,7 @@ The browser interface handles:
 The Node.js server:
 
 - Serves the browser application
-- Provides the internal Country API endpoint
+- Provides internal API endpoints
 - Communicates with the external Country API
 - Normalizes external country information
 
@@ -533,7 +599,10 @@ The Node.js server:
 typescript-csv-api-enricher/
 
 ├── images/
-│   └── architecture.svg
+│   ├── architecture.svg
+│   ├── enriched-csv-output.png
+│   ├── web-country-enrichment.png
+│   └── web-validation-summary.png
 │
 ├── public/
 │   ├── index.html
@@ -576,15 +645,13 @@ Generated folders such as `node_modules/` and `dist/` are excluded from version 
 
 ## Architecture Principles
 
-This project follows several design principles intended for reusable business tooling.
-
 ### Separation of Responsibilities
 
 CSV parsing, validation, API communication, server behavior, web UI, and data models are kept in separate modules.
 
 ### Fail-Safe Batch Processing
 
-A single invalid supplier record should not prevent valid records from being processed.
+A single invalid supplier record does not prevent valid records from being processed.
 
 ### External API Isolation
 
