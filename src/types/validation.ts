@@ -12,7 +12,8 @@
 export type ValidationRule =
     | "REQUIRED_VALUE"
     | "DUPLICATE_SUPPLIER_ID"
-    | "INVALID_EMAIL_FORMAT";
+    | "INVALID_EMAIL_FORMAT"
+    | "INVALID_COUNTRY_CODE_FORMAT";
 
 /**
  * 1件の検証エラーを表します。
