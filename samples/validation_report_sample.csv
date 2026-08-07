@@ -1,0 +1,6 @@
+﻿Row,Rule,Field,Supplier ID,Message
+2,DUPLICATE_SUPPLIER_ID,supplierId,SUP001,Duplicate supplier ID: SUP001
+4,INVALID_COUNTRY_CODE_FORMAT,countryCode,SUP003,Invalid country code format: DEU. Use a two-letter country code.
+6,REQUIRED_VALUE,countryCode,SUP005,Country code is required.
+6,INVALID_EMAIL_FORMAT,email,SUP005,Invalid email format: invalid-email
+7,DUPLICATE_SUPPLIER_ID,supplierId,SUP001,Duplicate supplier ID: SUP001

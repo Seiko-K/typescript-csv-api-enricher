@@ -1,0 +1,7 @@
+﻿supplierId,supplierName,countryCode,email,countryName,region,incomeLevel,capitalCity,longitude,latitude,enrichmentStatus
+SUP001,OpenAI,US,contact@example.com,United States,North America,High income,Washington D.C.,-77.032,38.8895,ENRICHED
+SUP002,Microsoft,US,info@example.com,United States,North America,High income,Washington D.C.,-77.032,38.8895,ENRICHED
+SUP003,SAP,DEU,contact@example.com,,,,,,,SKIPPED_INVALID_COUNTRY_CODE
+SUP004,Airbus,FR,hello@example.com,France,Europe & Central Asia,High income,Paris,2.35097,48.8566,ENRICHED
+SUP005,Example Supplier,,invalid-email,,,,,,,SKIPPED_INVALID_COUNTRY_CODE
+SUP001,Duplicate Supplier,JP,duplicate@example.com,Japan,East Asia & Pacific,High income,Tokyo,139.77,35.67,ENRICHED
