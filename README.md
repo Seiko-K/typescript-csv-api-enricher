@@ -702,7 +702,7 @@ Supplier, validation, country, and enrichment data are represented using explici
 
 ## Current Version
 
-**v0.1**
+**v0.1.0**
 
 Released: **2026-08-07**
 
