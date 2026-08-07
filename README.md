@@ -1,4 +1,4 @@
-![Version](https://img.shields.io/badge/version-v0.1-blue)
+![Version](https://img.shields.io/badge/version-v0.1.0-blue)
 ![Status](https://img.shields.io/badge/status-stable-success)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0-blue)
