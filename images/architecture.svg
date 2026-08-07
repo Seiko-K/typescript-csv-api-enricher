@@ -1,100 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420">
-  <defs>
-    <style>
-      .title {
-        font: 700 28px Arial, sans-serif;
-        fill: #1f2937;
-      }
+INPUT
+Supplier CSV
 
-      .box-title {
-        font: 700 18px Arial, sans-serif;
-        fill: #ffffff;
-      }
+WEB INTERFACE
+Browser Web UI
 
-      .box-subtitle {
-        font: 400 14px Arial, sans-serif;
-        fill: #e5e7eb;
-      }
+VALIDATION
+Validation Engine
 
-      .arrow {
-        stroke: #4b5563;
-        stroke-width: 4;
-        fill: none;
-        marker-end: url(#arrowhead);
-      }
+SERVER
+Node.js Server
 
-      .input-box {
-        fill: #2563eb;
-      }
+Validation Report
 
-      .process-box {
-        fill: #7c3aed;
-      }
+EXTERNAL DATA
+Country API
 
-      .validation-box {
-        fill: #ea580c;
-      }
+DATA ENRICHMENT
+Supplier Enrichment
 
-      .api-box {
-        fill: #0891b2;
-      }
-
-      .output-box {
-        fill: #15803d;
-      }
-    </style>
-
-    <marker
-      id="arrowhead"
-      markerWidth="12"
-      markerHeight="12"
-      refX="10"
-      refY="6"
-      orient="auto"
-    >
-      <path d="M0,0 L12,6 L0,12 Z" fill="#4b5563"/>
-    </marker>
-  </defs>
-
-  <rect width="1200" height="420" fill="#f8fafc"/>
-
-  <text x="600" y="55" text-anchor="middle" class="title">
-    TypeScript CSV API Enricher Architecture
-  </text>
-
-  <rect x="50" y="145" width="180" height="120" rx="18" class="input-box"/>
-  <text x="140" y="190" text-anchor="middle" class="box-title">Supplier CSV</text>
-  <text x="140" y="220" text-anchor="middle" class="box-subtitle">Business master data</text>
-
-  <line x1="230" y1="205" x2="290" y2="205" class="arrow"/>
-
-  <rect x="300" y="145" width="180" height="120" rx="18" class="process-box"/>
-  <text x="390" y="185" text-anchor="middle" class="box-title">CSV Import</text>
-  <text x="390" y="215" text-anchor="middle" class="box-subtitle">Parse and map data</text>
-  <text x="390" y="240" text-anchor="middle" class="box-subtitle">Supplier model</text>
-
-  <line x1="480" y1="205" x2="540" y2="205" class="arrow"/>
-
-  <rect x="550" y="145" width="180" height="120" rx="18" class="validation-box"/>
-  <text x="640" y="185" text-anchor="middle" class="box-title">Validation</text>
-  <text x="640" y="215" text-anchor="middle" class="box-subtitle">Required values</text>
-  <text x="640" y="240" text-anchor="middle" class="box-subtitle">Duplicates and formats</text>
-
-  <line x1="730" y1="205" x2="790" y2="205" class="arrow"/>
-
-  <rect x="800" y="145" width="180" height="120" rx="18" class="api-box"/>
-  <text x="890" y="185" text-anchor="middle" class="box-title">External API</text>
-  <text x="890" y="215" text-anchor="middle" class="box-subtitle">Country information</text>
-  <text x="890" y="240" text-anchor="middle" class="box-subtitle">Data enrichment</text>
-
-  <line x1="980" y1="205" x2="1040" y2="205" class="arrow"/>
-
-  <rect x="1050" y="145" width="100" height="120" rx="18" class="output-box"/>
-  <text x="1100" y="185" text-anchor="middle" class="box-title">Output</text>
-  <text x="1100" y="215" text-anchor="middle" class="box-subtitle">CSV</text>
-  <text x="1100" y="240" text-anchor="middle" class="box-subtitle">Reports</text>
-
-  <text x="600" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" fill="#374151">
-    Input → Import → Validation → API Enrichment → Export and Reporting
-  </text>
-</svg>
+OUTPUT
+Enriched Supplier CSV
