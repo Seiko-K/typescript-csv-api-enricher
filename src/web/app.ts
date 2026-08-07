@@ -1,6 +1,6 @@
 // ==========================================
 // Web Interface Controller
-// Web画面と既存のValidation Engineを接続する
+// Web画面・Validation Engine・CSV出力を接続する
 // ==========================================
 
 import { parse } from "csv-parse/browser/esm/sync";
@@ -13,17 +13,24 @@ import { validateSuppliers } from
 
 /**
  * CSVパーサーが返す1行分のデータです。
- *
- * CSVの列名は文字列として取得されるため、
- * キーと値をどちらもstringとして扱います。
  */
 type CsvRecord = Record<string, string>;
 
 /**
- * 指定したセレクターのHTML要素を取得します。
+ * 最後に実行した検証結果を保持します。
  *
- * 要素が見つからない場合は早い段階でエラーにし、
- * HTMLとTypeScriptの不一致を発見しやすくします。
+ * Exportボタンが押されたときに、
+ * 画面に表示したものと同じ結果をCSVへ出力します。
+ */
+let latestValidationIssues: ValidationIssue[] = [];
+
+/**
+ * 最後に選択されたCSVファイル名を保持します。
+ */
+let latestSourceFileName = "";
+
+/**
+ * HTML要素を安全に取得します。
  */
 function getElement<T extends Element>(
     selector: string
@@ -41,7 +48,6 @@ function getElement<T extends Element>(
 
 // ==========================================
 // HTML Elements
-// 画面上の各要素を取得する
 // ==========================================
 
 const csvFileInput =
@@ -52,6 +58,11 @@ const selectedFileName =
 
 const validateButton =
     getElement<HTMLButtonElement>("#validate-button");
+
+const exportReportButton =
+    getElement<HTMLButtonElement>(
+        "#export-report-button"
+    );
 
 const applicationStatus =
     getElement<HTMLElement>("#application-status");
@@ -72,10 +83,7 @@ const issuesContainer =
     getElement<HTMLElement>("#issues-container");
 
 /**
- * 選択されたファイルがCSVかどうかを確認します。
- *
- * OSやブラウザによってMIME Typeが空になる場合があるため、
- * ファイル名の拡張子も併せて確認します。
+ * 選択されたファイルがCSVか確認します。
  */
 function isCsvFile(file: File): boolean {
     const normalizedFileName =
@@ -88,10 +96,7 @@ function isCsvFile(file: File): boolean {
 }
 
 /**
- * CSVレコードから、候補となる列名を順番に探します。
- *
- * 現在のサンプルCSVだけでなく、
- * snake_case、camelCase、表示名形式にも対応します。
+ * CSVレコードから候補列名を探して値を返します。
  */
 function getCsvValue(
     record: CsvRecord,
@@ -109,10 +114,7 @@ function getCsvValue(
 }
 
 /**
- * CSVの1行をSupplierモデルへ変換します。
- *
- * Excelでいうと、読み込んだ列を
- * システム内部の標準列へ対応付ける処理です。
+ * CSVの1行をSupplier型へ変換します。
  */
 function mapCsvRecordToSupplier(
     record: CsvRecord
@@ -173,7 +175,7 @@ function parseSupplierCsv(
 }
 
 /**
- * Summary表示を初期状態へ戻します。
+ * Summary表示を初期化します。
  */
 function resetValidationSummary(): void {
     totalRecordsElement.textContent = "–";
@@ -183,9 +185,14 @@ function resetValidationSummary(): void {
 }
 
 /**
- * Validation Issues表示を初期状態へ戻します。
+ * Validation Issues表示を初期化します。
  */
 function resetValidationIssues(): void {
+    latestValidationIssues = [];
+    latestSourceFileName = "";
+
+    exportReportButton.disabled = true;
+
     issuesContainer.className = "empty-state";
     issuesContainer.replaceChildren();
 
@@ -205,7 +212,7 @@ function resetValidationIssues(): void {
 }
 
 /**
- * 1件のValidation Issueを画面表示用のカードへ変換します。
+ * 1件のValidation Issueをカードへ変換します。
  */
 function createIssueCard(
     issue: ValidationIssue
@@ -248,7 +255,7 @@ function createIssueCard(
 }
 
 /**
- * 検証エラーの一覧を画面へ表示します。
+ * 検証エラーを画面へ表示します。
  */
 function renderValidationIssues(
     issues: ValidationIssue[]
@@ -288,7 +295,139 @@ function renderValidationIssues(
 }
 
 /**
- * ファイルが選択されたときの画面状態を更新します。
+ * CSVセルとして安全な文字列へ変換します。
+ *
+ * カンマ・改行・ダブルクォートを含む値は、
+ * ダブルクォートで囲みます。
+ */
+function escapeCsvValue(value: string): string {
+    const escapedValue =
+        value.replaceAll("\"", "\"\"");
+
+    const requiresQuotes =
+        escapedValue.includes(",") ||
+        escapedValue.includes("\n") ||
+        escapedValue.includes("\r") ||
+        escapedValue.includes("\"");
+
+    return requiresQuotes
+        ? `"${escapedValue}"`
+        : escapedValue;
+}
+
+/**
+ * Validation Issue一覧からCSVテキストを生成します。
+ *
+ * 改行コードはWindows・macOSのExcelで扱いやすい
+ * CRLF形式を使用します。
+ */
+function createValidationReportCsv(
+    issues: ValidationIssue[]
+): string {
+    const header = [
+        "Row",
+        "Rule",
+        "Field",
+        "Supplier ID",
+        "Message"
+    ];
+
+    const rows = issues.map((issue) => [
+        String(issue.rowNumber),
+        issue.rule,
+        issue.field,
+        issue.supplierId,
+        issue.message
+    ]);
+
+    return [header, ...rows]
+        .map((row) =>
+            row
+                .map(escapeCsvValue)
+                .join(",")
+        )
+        .join("\r\n");
+}
+
+/**
+ * 現在日付をYYYY-MM-DD形式で返します。
+ */
+function getCurrentDateText(): string {
+    const currentDate = new Date();
+
+    const year = currentDate.getFullYear();
+
+    const month = String(
+        currentDate.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+        currentDate.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+/**
+ * 元CSVの拡張子を除いたファイル名を返します。
+ */
+function getBaseFileName(fileName: string): string {
+    return fileName.replace(/\.csv$/i, "");
+}
+
+/**
+ * Validation ReportをCSVファイルとして保存します。
+ *
+ * ブラウザ標準のダウンロード機能を利用するため、
+ * Windows・macOSで同じ処理を使用できます。
+ */
+function exportValidationReport(): void {
+    if (latestValidationIssues.length === 0) {
+        return;
+    }
+
+    const csvContent = createValidationReportCsv(
+        latestValidationIssues
+    );
+
+    // UTF-8 BOMを追加し、Excelでの文字化けを抑えます。
+    const utf8Bom = "\uFEFF";
+
+    const reportBlob = new Blob(
+        [utf8Bom, csvContent],
+        {
+            type: "text/csv;charset=utf-8"
+        }
+    );
+
+    const downloadUrl =
+        URL.createObjectURL(reportBlob);
+
+    const downloadLink =
+        document.createElement("a");
+
+    const sourceBaseName =
+        getBaseFileName(latestSourceFileName);
+
+    const reportFileName =
+        `${sourceBaseName}_validation_report_` +
+        `${getCurrentDateText()}.csv`;
+
+    downloadLink.href = downloadUrl;
+    downloadLink.download = reportFileName;
+
+    document.body.append(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+
+    URL.revokeObjectURL(downloadUrl);
+
+    applicationStatus.textContent =
+        `${reportFileName} was exported successfully.`;
+}
+
+/**
+ * ファイル選択時の処理です。
  */
 function handleFileSelection(): void {
     const selectedFile =
@@ -328,8 +467,7 @@ function handleFileSelection(): void {
 }
 
 /**
- * Validateボタンが押されたときに、
- * CSVの読み込みとSupplier検証を実行します。
+ * CSV読込と検証を実行します。
  */
 async function handleValidationRequest(): Promise<void> {
     const selectedFile =
@@ -340,23 +478,20 @@ async function handleValidationRequest(): Promise<void> {
     }
 
     validateButton.disabled = true;
+    exportReportButton.disabled = true;
 
     applicationStatus.textContent =
         "Validating supplier data...";
 
     try {
-        // ブラウザ標準機能で選択されたCSVを読み込みます。
         const csvText = await selectedFile.text();
 
-        // CSVをSupplierモデルへ変換します。
         const suppliers =
             parseSupplierCsv(csvText);
 
-        // CLIでも使用している既存のValidation Engineを実行します。
         const validationResult =
             validateSuppliers(suppliers);
 
-        // Summaryカードを更新します。
         totalRecordsElement.textContent =
             String(validationResult.totalRecords);
 
@@ -369,15 +504,26 @@ async function handleValidationRequest(): Promise<void> {
         issuesDetectedElement.textContent =
             String(validationResult.issues.length);
 
-        // 個別エラーを画面へ表示します。
         renderValidationIssues(
             validationResult.issues
         );
+
+        latestValidationIssues = [
+            ...validationResult.issues
+        ];
+
+        latestSourceFileName =
+            selectedFile.name;
+
+        // エラーがある場合だけレポート出力を有効にします。
+        exportReportButton.disabled =
+            validationResult.issues.length === 0;
 
         applicationStatus.textContent =
             `${selectedFile.name} was validated successfully.`;
     } catch (error: unknown) {
         resetValidationSummary();
+        resetValidationIssues();
 
         issuesContainer.className = "empty-state";
         issuesContainer.replaceChildren();
@@ -407,7 +553,10 @@ async function handleValidationRequest(): Promise<void> {
     }
 }
 
-// ファイル選択とボタン操作を各処理へ接続します。
+// ==========================================
+// Event Connections
+// ==========================================
+
 csvFileInput.addEventListener(
     "change",
     handleFileSelection
@@ -418,4 +567,9 @@ validateButton.addEventListener(
     () => {
         void handleValidationRequest();
     }
+);
+
+exportReportButton.addEventListener(
+    "click",
+    exportValidationReport
 );

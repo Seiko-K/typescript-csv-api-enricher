@@ -317,3 +317,157 @@ h2 {
         grid-template-columns: 1fr;
     }
 }
+
+/* ==========================================
+   Validation Issue Cards
+   検証エラーをカード形式で表示する
+   ========================================== */
+
+.issue-list {
+    display: grid;
+    gap: 16px;
+}
+
+.issue-card {
+    padding: 20px;
+    background-color: #fffafa;
+    border: 1px solid #ebc8c3;
+    border-left: 5px solid #c84a3d;
+    border-radius: var(--border-radius-medium);
+}
+
+.issue-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.issue-row {
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 750;
+}
+
+.issue-rule {
+    padding: 5px 10px;
+    background-color: #fbe8e5;
+    border-radius: 999px;
+    color: #9e372c;
+    font-size: 0.72rem;
+    font-weight: 750;
+}
+
+.issue-message {
+    margin-bottom: 14px;
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 650;
+}
+
+.issue-details {
+    margin-bottom: 0;
+    color: var(--muted-text-color);
+    font-size: 0.87rem;
+}
+
+.success-state {
+    background-color: #f1faf4;
+    border-color: #b8dcc3;
+}
+
+/* ==========================================
+   Export Error Report Button
+   エラーレポート出力ボタン
+   ========================================== */
+
+.export-report-button {
+    width: 100%;
+    min-height: 50px;
+    margin-top: 20px;
+    padding: 12px 20px;
+    background-color: var(--surface-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 10px;
+    color: var(--primary-color);
+    font: inherit;
+    font-weight: 750;
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        color 160ms ease,
+        transform 160ms ease;
+}
+
+.export-report-button:not(:disabled):hover {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.export-report-button:disabled {
+    border-color: var(--disabled-color);
+    color: var(--disabled-color);
+    cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+    .issue-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+/* ==========================================
+   Validation Report Export
+   検証レポート出力ボタン
+   ========================================== */
+
+.issues-section-heading {
+    align-items: center;
+}
+
+.export-report-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 16px;
+    background-color: var(--surface-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 10px;
+    color: var(--primary-color);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        color 160ms ease,
+        transform 160ms ease;
+}
+
+.export-report-button:not(:disabled):hover {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.export-report-button:disabled {
+    border-color: var(--border-color);
+    color: var(--disabled-color);
+    cursor: not-allowed;
+}
+
+@media (max-width: 620px) {
+    .issues-section-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .export-report-button {
+        width: 100%;
+    }
+}

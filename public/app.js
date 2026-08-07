@@ -3309,6 +3309,8 @@
     "src/web/app.ts"() {
       init_sync();
       init_supplierValidator();
+      var latestValidationIssues = [];
+      var latestSourceFileName = "";
       function getElement(selector) {
         const element = document.querySelector(selector);
         if (!element) {
@@ -3321,6 +3323,9 @@
       var csvFileInput = getElement("#csv-file-input");
       var selectedFileName = getElement("#selected-file-name");
       var validateButton = getElement("#validate-button");
+      var exportReportButton = getElement(
+        "#export-report-button"
+      );
       var applicationStatus = getElement("#application-status");
       var totalRecordsElement = getElement("#total-records");
       var validRecordsElement = getElement("#valid-records");
@@ -3392,6 +3397,9 @@
         issuesDetectedElement.textContent = "\u2013";
       }
       function resetValidationIssues() {
+        latestValidationIssues = [];
+        latestSourceFileName = "";
+        exportReportButton.disabled = true;
         issuesContainer.className = "empty-state";
         issuesContainer.replaceChildren();
         const title = document.createElement("p");
@@ -3444,6 +3452,70 @@
           );
         }
       }
+      function escapeCsvValue(value) {
+        const escapedValue = value.replaceAll('"', '""');
+        const requiresQuotes = escapedValue.includes(",") || escapedValue.includes("\n") || escapedValue.includes("\r") || escapedValue.includes('"');
+        return requiresQuotes ? `"${escapedValue}"` : escapedValue;
+      }
+      function createValidationReportCsv(issues) {
+        const header = [
+          "Row",
+          "Rule",
+          "Field",
+          "Supplier ID",
+          "Message"
+        ];
+        const rows = issues.map((issue) => [
+          String(issue.rowNumber),
+          issue.rule,
+          issue.field,
+          issue.supplierId,
+          issue.message
+        ]);
+        return [header, ...rows].map(
+          (row) => row.map(escapeCsvValue).join(",")
+        ).join("\r\n");
+      }
+      function getCurrentDateText() {
+        const currentDate = /* @__PURE__ */ new Date();
+        const year = currentDate.getFullYear();
+        const month = String(
+          currentDate.getMonth() + 1
+        ).padStart(2, "0");
+        const day = String(
+          currentDate.getDate()
+        ).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+      function getBaseFileName(fileName) {
+        return fileName.replace(/\.csv$/i, "");
+      }
+      function exportValidationReport() {
+        if (latestValidationIssues.length === 0) {
+          return;
+        }
+        const csvContent = createValidationReportCsv(
+          latestValidationIssues
+        );
+        const utf8Bom = "\uFEFF";
+        const reportBlob = new Blob(
+          [utf8Bom, csvContent],
+          {
+            type: "text/csv;charset=utf-8"
+          }
+        );
+        const downloadUrl = URL.createObjectURL(reportBlob);
+        const downloadLink = document.createElement("a");
+        const sourceBaseName = getBaseFileName(latestSourceFileName);
+        const reportFileName = `${sourceBaseName}_validation_report_${getCurrentDateText()}.csv`;
+        downloadLink.href = downloadUrl;
+        downloadLink.download = reportFileName;
+        document.body.append(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        URL.revokeObjectURL(downloadUrl);
+        applicationStatus.textContent = `${reportFileName} was exported successfully.`;
+      }
       function handleFileSelection() {
         const selectedFile = csvFileInput.files?.[0];
         resetValidationSummary();
@@ -3469,6 +3541,7 @@
           return;
         }
         validateButton.disabled = true;
+        exportReportButton.disabled = true;
         applicationStatus.textContent = "Validating supplier data...";
         try {
           const csvText = await selectedFile.text();
@@ -3481,9 +3554,15 @@
           renderValidationIssues(
             validationResult.issues
           );
+          latestValidationIssues = [
+            ...validationResult.issues
+          ];
+          latestSourceFileName = selectedFile.name;
+          exportReportButton.disabled = validationResult.issues.length === 0;
           applicationStatus.textContent = `${selectedFile.name} was validated successfully.`;
         } catch (error) {
           resetValidationSummary();
+          resetValidationIssues();
           issuesContainer.className = "empty-state";
           issuesContainer.replaceChildren();
           const title = document.createElement("p");
@@ -3507,6 +3586,10 @@
         () => {
           void handleValidationRequest();
         }
+      );
+      exportReportButton.addEventListener(
+        "click",
+        exportValidationReport
       );
     }
   });

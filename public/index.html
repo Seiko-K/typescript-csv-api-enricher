@@ -21,8 +21,7 @@
 <body>
     <main class="page-container">
         <!--
-            アプリケーションのタイトル領域です。
-            ツールの目的を最初に明確に伝えます。
+            アプリケーションのタイトル領域
         -->
         <header class="page-header">
             <p class="eyebrow">BUSINESS DATA QUALITY</p>
@@ -36,9 +35,7 @@
         </header>
 
         <!--
-            CSVファイルを選択する操作領域です。
-            labelをボタンとして見せることで、
-            OS標準のファイル選択画面を利用します。
+            CSVファイル選択領域
         -->
         <section
             class="panel upload-panel"
@@ -102,8 +99,7 @@
         </section>
 
         <!--
-            検証結果の集計を表示する領域です。
-            現時点では初期値のみ表示します。
+            検証結果集計
         -->
         <section
             class="panel result-panel"
@@ -172,18 +168,26 @@
         </section>
 
         <!--
-            個別の検証エラーを表示する領域です。
-            次回、Validation Engineと接続します。
+            個別の検証エラーとCSV出力
         -->
         <section
             class="panel issues-panel"
             aria-labelledby="issues-title"
         >
-            <div class="section-heading">
+            <div class="section-heading issues-section-heading">
                 <div>
                     <p class="step-label">DETAILS</p>
                     <h2 id="issues-title">Validation Issues</h2>
                 </div>
+
+                <button
+                    id="export-report-button"
+                    class="export-report-button"
+                    type="button"
+                    disabled
+                >
+                    Export Validation Report
+                </button>
             </div>
 
             <div
