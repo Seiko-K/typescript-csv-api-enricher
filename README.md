@@ -1,8 +1,8 @@
 ![Version](https://img.shields.io/badge/version-v0.1.0-blue)
 ![Status](https://img.shields.io/badge/status-stable-success)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![TypeScript](https://img.shields.io/badge/TypeScript-7.0-blue)
-![Node.js](https://img.shields.io/badge/Node.js-24.18-green)
+![TypeScript](https://img.shields.io/badge/TypeScript-v7.0.2-blue)
+![Node.js](https://img.shields.io/badge/Node.js-v24.18.0-green)
 ![Feature](https://img.shields.io/badge/feature-CSV_API_Enrichment-orange)
 
 # TypeScript CSV API Enricher
